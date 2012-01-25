@@ -15,8 +15,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
  *                                                                         *
  *   Alternatively, this file is available under the Mozilla Public        *
  *   License Version 1.1.  You may obtain a copy of the License at         *
@@ -31,12 +31,15 @@
 #include "tbytevector.h"
 
 #include <string>
-#include <iostream>
+#include <ostream>
 
 /*!
  * \relates TagLib::String
  *
- * Converts a TagLib::String to a QString without a requirement to link to Qt.
+ * Converts a QString to a TagLib::String without a requirement to link to Qt.
+ *
+ * \note consider conversion via usual char-by-char for loop to avoid UTF16->UTF8->UTF16
+ * conversion happening in the background
  */
 #define QStringToTString(s) TagLib::String(s.utf8().data(), TagLib::String::UTF8)
 
@@ -44,6 +47,10 @@
  * \relates TagLib::String
  *
  * Converts a TagLib::String to a QString without a requirement to link to Qt.
+ *
+ * \note consider conversion via usual char-by-char for loop to avoid UTF16->UTF8->UTF16
+ * conversion happening in the background
+ *
  */
 #define TStringToQString(s) QString::fromUtf8(s.toCString(true))
 
@@ -291,8 +298,21 @@ namespace TagLib {
 
     /*!
      * Convert the string to an integer.
+     *
+     * Returns the integer if the conversion was successfull or 0 if the
+     * string does not represent a number.
      */
+    // BIC: merge with the method below
     int toInt() const;
+
+    /*!
+     * Convert the string to an integer.
+     *
+     * If the conversion was successfull, it sets the value of \a *ok to
+     * true and returns the integer. Otherwise it sets \a *ok to false
+     * and the result is undefined.
+     */
+    int toInt(bool *ok) const;
 
     /*!
      * Returns a string with the leading and trailing whitespace stripped.

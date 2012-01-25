@@ -15,8 +15,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
  *                                                                         *
  *   Alternatively, this file is available under the Mozilla Public        *
  *   License Version 1.1.  You may obtain a copy of the License at         *
@@ -27,7 +27,7 @@
 #include "unicode.h"
 #include "tdebug.h"
 
-#include <iostream>
+#include <ostream>
 
 #include <string.h>
 
@@ -432,16 +432,26 @@ ByteVector String::data(Type t) const
 
 int String::toInt() const
 {
+  return toInt(0);
+}
+
+int String::toInt(bool *ok) const
+{
   int value = 0;
 
-  bool negative = d->data[0] == '-';
-  uint i = negative ? 1 : 0;
+  uint size = d->data.size();
+  bool negative = size > 0 && d->data[0] == '-';
+  uint start = negative ? 1 : 0;
+  uint i = start;
 
-  for(; i < d->data.size() && d->data[i] >= '0' && d->data[i] <= '9'; i++)
+  for(; i < size && d->data[i] >= '0' && d->data[i] <= '9'; i++)
     value = value * 10 + (d->data[i] - '0');
 
   if(negative)
     value = value * -1;
+
+  if(ok)
+    *ok = (size > start && i == size);
 
   return value;
 }

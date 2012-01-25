@@ -15,8 +15,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
  *                                                                         *
  *   Alternatively, this file is available under the Mozilla Public        *
  *   License Version 1.1.  You may obtain a copy of the License at         *
@@ -47,6 +47,7 @@ public:
     IntPair m_intPair;
   };
   StringList m_stringList;
+  MP4::CoverArtList m_coverArtList;
 };
 
 MP4::Item::Item()
@@ -103,6 +104,12 @@ MP4::Item::Item(const StringList &value)
   d->m_stringList = value;
 }
 
+MP4::Item::Item(const MP4::CoverArtList &value)
+{
+  d = new ItemPrivate;
+  d->m_coverArtList = value;
+}
+
 bool
 MP4::Item::toBool() const
 {
@@ -125,6 +132,12 @@ StringList
 MP4::Item::toStringList() const
 {
   return d->m_stringList;
+}
+
+MP4::CoverArtList
+MP4::Item::toCoverArtList() const
+{
+  return d->m_coverArtList;
 }
 
 bool

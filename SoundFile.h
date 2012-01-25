@@ -10,8 +10,11 @@
 #define TAGLIB_STATIC
 #include <fileref.h>
 #include <tag.h>
+#include "mpeg/mpegfile.h"
+#include "mpeg/xingheader.h"
+#include "riff/wav/wavfile.h"
 
-#include "wave.h"
+#include <tbytevector.h>
 
 #define SOUNDTYPE_WAVE 0
 #define SOUNDTYPE_MP3 1
@@ -20,9 +23,31 @@
 HandleType_t g_SoundFileType;
 
 
+// Because TagLib is hiding members from us we have to trick a little bit...
+class SoundLib_WavFile : public TagLib::RIFF::WAV::File {
 
+public:
+	float getSoundLength() {
+		unsigned int streamLength = 0;
+
+		for (TagLib::uint i = 0; i < chunkCount(); i++) {
+			if (chunkName(i) == "data") {
+				streamLength = chunkDataSize(i);
+			}
+		}
+
+		TagLib::uint byteRate = audioProperties()->bitrate() * 1000 / 8;
+
+		return float(byteRate > 0 ? streamLength / byteRate : 0);
+	}
+};
 
 class SoundFile {
+
+private:
+	TagLib::File* file;
+	TagLib::Tag* tag;
+	size_t type;
 
 public:
 	SoundFile(char *path) {
@@ -37,16 +62,16 @@ public:
 		}
 
 		if (strcmp(file_extension, ".wav") == 0) {
+			file = new TagLib::RIFF::WAV::File(path);
 			type = SOUNDTYPE_WAVE;
 		}
 		else if (strcmp(file_extension, ".mp3") == 0) {
+			file = new TagLib::MPEG::File(path);
 			type = SOUNDTYPE_MP3;
 		}
 		else {
 			return;
 		}
-
-		file = new TagLib::FileRef(path);
 
 		loadTag();
 	}
@@ -61,7 +86,7 @@ public:
 			return false;
 		}
 
-		if (file->isNull()) {
+		if (!file->isValid()) {
 			return false;
 		}
 		
@@ -78,7 +103,7 @@ public:
 		return false;
 	}
 
-	size_t getSoundDuration() {
+	float getSoundDuration() {
 		
 		TagLib::AudioProperties *properties = file->audioProperties();
 		
@@ -86,30 +111,45 @@ public:
 			return -1;
 		}
 
-		// Fix for TagLib not returning Wav length correctly
 		if (type == SOUNDTYPE_WAVE) {
+			SoundLib_WavFile* f = (SoundLib_WavFile*)file;
+			return f->getSoundLength();
+		}
+		else {
+			TagLib::MPEG::File* f = (TagLib::MPEG::File*)file;
 
-			WavFileForIO *wave = new WavFileForIO();
-			TagLib::FileName filePath = file->file()->name();
-			const char *path = filePath;
-			wave->setPath((char *)path);
+			long first = f->firstFrameOffset();
+			long last = f->lastFrameOffset();
 
-			if (!wave->read()) {
-				delete wave;
+			f->seek(first);
+			TagLib::MPEG::Header firstHeader(f->readBlock(4));
+			int xingHeaderOffset = TagLib::MPEG::XingHeader::xingHeaderOffset(firstHeader.version(), firstHeader.channelMode());
 
-				return -1;
+			f->seek(first + xingHeaderOffset);
+			TagLib::MPEG::XingHeader xingHeader(f->readBlock(16));
+
+			// Read the length and the bitrate from the Xing header.
+			if (xingHeader.isValid() && firstHeader.sampleRate() > 0 && xingHeader.totalFrames() > 0) {
+
+				double timePerFrame = double(firstHeader.samplesPerFrame()) / firstHeader.sampleRate();
+
+				return float(timePerFrame * xingHeader.totalFrames());
 			}
+			else {
+				// Since there was no valid Xing header found, we hope that we're in a constant
+				// bitrate file.
 
-			float duration = wave->getSongDuration();
+				// TODO: Make this more robust with audio property detection for VBR without a
+				// Xing header.
+				if (firstHeader.frameLength() > 0 && firstHeader.bitrate() > 0) {
+					int frames = (last - first) / firstHeader.frameLength() + 1;
 
-			delete wave;
-
-			return (size_t)ceil(duration);
+					return float(float(firstHeader.frameLength() * frames) / float(firstHeader.bitrate() * 125) + 0.5);
+				}
+			}
 		}
 
-		size_t test = properties->length();
-
-		return properties->length();
+		return 0.0;
 	}
 
 	size_t getSoundBitRate() {
@@ -231,8 +271,4 @@ private:
 
 		return;
 	}
-
-	TagLib::FileRef* file;
-	TagLib::Tag* tag;
-	size_t type;
 };

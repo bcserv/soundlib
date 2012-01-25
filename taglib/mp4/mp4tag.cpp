@@ -15,8 +15,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
  *                                                                         *
  *   Alternatively, this file is available under the Mozilla Public        *
  *   License Version 1.1.  You may obtain a copy of the License at         *
@@ -42,12 +42,12 @@ class MP4::Tag::TagPrivate
 public:
   TagPrivate() : file(0), atoms(0) {}
   ~TagPrivate() {}
-  File *file;
+  TagLib::File *file;
   Atoms *atoms;
   ItemListMap items;
 };
 
-MP4::Tag::Tag(File *file, MP4::Atoms *atoms)
+MP4::Tag::Tag(TagLib::File *file, MP4::Atoms *atoms)
 {
   d = new TagPrivate;
   d->file = file;
@@ -76,6 +76,9 @@ MP4::Tag::Tag(File *file, MP4::Atoms *atoms)
     }
     else if(atom->name == "gnre") {
       parseGnre(atom, file);
+    }
+    else if(atom->name == "covr") {
+      parseCovr(atom, file);
     }
     else {
       parseText(atom, file);
@@ -140,8 +143,8 @@ MP4::Tag::parseGnre(MP4::Atom *atom, TagLib::File *file)
   ByteVectorList data = parseData(atom, file);
   if(data.size()) {
     int idx = (int)data[0].toShort();
-    if(!d->items.contains("\251gen")) {
-      d->items.insert("\251gen", StringList(ID3v1::genre(idx)));
+    if(!d->items.contains("\251gen") && idx > 0) {
+      d->items.insert("\251gen", StringList(ID3v1::genre(idx - 1)));
     }
   }
 }
@@ -194,6 +197,30 @@ MP4::Tag::parseFreeForm(MP4::Atom *atom, TagLib::File *file)
   }
 }
 
+void
+MP4::Tag::parseCovr(MP4::Atom *atom, TagLib::File *file)
+{
+  MP4::CoverArtList value;
+  ByteVector data = file->readBlock(atom->length - 8);
+  unsigned int pos = 0;
+  while(pos < data.size()) {
+    int length = data.mid(pos, 4).toUInt();
+    ByteVector name = data.mid(pos + 4, 4);
+    int flags = data.mid(pos + 8, 4).toUInt();
+    if(name != "data") {
+      debug("MP4: Unexpected atom \"" + name + "\", expecting \"data\"");
+      break;
+    }
+    if(flags == MP4::CoverArt::PNG || flags == MP4::CoverArt::JPEG) {
+      value.append(MP4::CoverArt(MP4::CoverArt::Format(flags),
+                                 data.mid(pos + 16, length - 16)));
+    }
+    pos += length;
+  }
+  if(value.size() > 0)
+    d->items.insert(atom->name, value);
+}
+
 ByteVector
 MP4::Tag::padIlst(const ByteVector &data, int length)
 {
@@ -243,7 +270,7 @@ MP4::Tag::renderIntPair(const ByteVector &name, MP4::Item &item)
               ByteVector::fromShort(item.toIntPair().first) +
               ByteVector::fromShort(item.toIntPair().second) +
               ByteVector(2, '\0'));
-  return renderData(name, 0x15, data);
+  return renderData(name, 0x00, data);
 }
 
 ByteVector
@@ -253,7 +280,7 @@ MP4::Tag::renderIntPairNoTrailing(const ByteVector &name, MP4::Item &item)
   data.append(ByteVector(2, '\0') +
               ByteVector::fromShort(item.toIntPair().first) +
               ByteVector::fromShort(item.toIntPair().second));
-  return renderData(name, 0x15, data);
+  return renderData(name, 0x00, data);
 }
 
 ByteVector
@@ -265,6 +292,18 @@ MP4::Tag::renderText(const ByteVector &name, MP4::Item &item, int flags)
     data.append(value[i].data(String::UTF8));
   }
   return renderData(name, flags, data);
+}
+
+ByteVector
+MP4::Tag::renderCovr(const ByteVector &name, MP4::Item &item)
+{
+  ByteVector data;
+  MP4::CoverArtList value = item.toCoverArtList();
+  for(unsigned int i = 0; i < value.size(); i++) {
+    data.append(renderAtom("data", ByteVector::fromUInt(value[i].format()) +
+                                   ByteVector(4, '\0') + value[i].data()));
+  }
+  return renderAtom(name, data);
 }
 
 ByteVector
@@ -305,6 +344,9 @@ MP4::Tag::save()
     }
     else if(name == "tmpo") {
       data.append(renderInt(name.data(String::Latin1), i->second));
+    }
+    else if(name == "covr") {
+      data.append(renderCovr(name.data(String::Latin1), i->second));
     }
     else if(name.size() == 4){
       data.append(renderText(name.data(String::Latin1), i->second));

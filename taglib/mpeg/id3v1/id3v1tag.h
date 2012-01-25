@@ -15,8 +15,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
  *                                                                         *
  *   Alternatively, this file is available under the Mozilla Public        *
  *   License Version 1.1.  You may obtain a copy of the License at         *
@@ -52,7 +52,7 @@ namespace TagLib {
      *
      * \warning It is advisable <b>not</b> to write non-ISO-8859-1 data to ID3v1
      * tags.  Please consider disabling the writing of ID3v1 tags in the case
-     * that the data is ISO-8859-1.
+     * that the data is not ISO-8859-1.
      *
      * \see ID3v1::Tag::setStringHandler()
      */

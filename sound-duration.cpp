@@ -73,7 +73,7 @@ static cell_t GetSoundLength(IPluginContext *pContext, const cell_t *params)
 		return pContext->ThrowNativeError("Invalid sound-file handle %x (error %d)", hndl, err);
 	}
  
-	return soundfile->getSoundDuration();
+	return sp_ftoc(soundfile->getSoundDuration());
 }
 
 static cell_t GetSoundBitRate(IPluginContext *pContext, const cell_t *params) {

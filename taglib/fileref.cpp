@@ -1,6 +1,10 @@
 /***************************************************************************
     copyright            : (C) 2002 - 2008 by Scott Wheeler
     email                : wheeler@kde.org
+    
+    copyright            : (C) 2010 by Alex Novichkov
+    email                : novichko@atnet.ru
+                           (added APE file support)
  ***************************************************************************/
 
 /***************************************************************************
@@ -15,8 +19,8 @@
  *                                                                         *
  *   You should have received a copy of the GNU Lesser General Public      *
  *   License along with this library; if not, write to the Free Software   *
- *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
- *   USA                                                                   *
+ *   Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA         *
+ *   02110-1301  USA                                                       *
  *                                                                         *
  *   Alternatively, this file is available under the Mozilla Public        *
  *   License Version 1.1.  You may obtain a copy of the License at         *
@@ -29,6 +33,7 @@
 
 #include <tfile.h>
 #include <tstring.h>
+#include <tdebug.h>
 
 #include "fileref.h"
 #include "asffile.h"
@@ -43,6 +48,7 @@
 #include "trueaudiofile.h"
 #include "aifffile.h"
 #include "wavfile.h"
+#include "apefile.h"
 
 using namespace TagLib;
 
@@ -93,11 +99,19 @@ FileRef::~FileRef()
 
 Tag *FileRef::tag() const
 {
+  if(isNull()) {
+    debug("FileRef::tag() - Called without a valid file.");
+    return 0;
+  }
   return d->file->tag();
 }
 
 AudioProperties *FileRef::audioProperties() const
 {
+  if(isNull()) {
+    debug("FileRef::audioProperties() - Called without a valid file.");
+    return 0;
+  }
   return d->file->audioProperties();
 }
 
@@ -108,6 +122,10 @@ File *FileRef::file() const
 
 bool FileRef::save()
 {
+  if(isNull()) {
+    debug("FileRef::save() - Called without a valid file.");
+    return false;
+  }
   return d->file->save();
 }
 
@@ -143,6 +161,7 @@ StringList FileRef::defaultFileExtensions()
   l.append("aif");
   l.append("aiff");
   l.append("wav");
+  l.append("ape");
 
   return l;
 }
@@ -205,12 +224,18 @@ File *FileRef::create(FileName fileName, bool readAudioProperties,
   int pos = s.rfind(".");
   if(pos != -1) {
     String ext = s.substr(pos + 1).upper();
-    if(ext == "OGG" || ext == "OGA")
-      return new Ogg::Vorbis::File(fileName, readAudioProperties, audioPropertiesStyle);
     if(ext == "MP3")
       return new MPEG::File(fileName, readAudioProperties, audioPropertiesStyle);
-    if(ext == "OGA")
-      return new Ogg::FLAC::File(fileName, readAudioProperties, audioPropertiesStyle);
+    if(ext == "OGG")
+      return new Ogg::Vorbis::File(fileName, readAudioProperties, audioPropertiesStyle);
+    if(ext == "OGA") {
+      /* .oga can be any audio in the Ogg container. First try FLAC, then Vorbis. */
+      File *file = new Ogg::FLAC::File(fileName, readAudioProperties, audioPropertiesStyle);
+      if (file->isValid())
+        return file;
+      delete file;
+      return new Ogg::Vorbis::File(fileName, readAudioProperties, audioPropertiesStyle);
+    }
     if(ext == "FLAC")
       return new FLAC::File(fileName, readAudioProperties, audioPropertiesStyle);
     if(ext == "MPC")
@@ -229,12 +254,12 @@ File *FileRef::create(FileName fileName, bool readAudioProperties,
     if(ext == "WMA" || ext == "ASF")
       return new ASF::File(fileName, readAudioProperties, audioPropertiesStyle);
 #endif
-    if(ext == "AIF")
+    if(ext == "AIF" || ext == "AIFF")
       return new RIFF::AIFF::File(fileName, readAudioProperties, audioPropertiesStyle);
     if(ext == "WAV")
       return new RIFF::WAV::File(fileName, readAudioProperties, audioPropertiesStyle);
-    if(ext == "AIFF")
-      return new RIFF::AIFF::File(fileName, readAudioProperties, audioPropertiesStyle);
+    if(ext == "APE")
+      return new APE::File(fileName, readAudioProperties, audioPropertiesStyle);
   }
 
   return 0;
