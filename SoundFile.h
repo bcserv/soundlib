@@ -36,9 +36,9 @@ public:
 			}
 		}
 
-		TagLib::uint byteRate = audioProperties()->bitrate() * 1000 / 8;
+		float byteRate = float(audioProperties()->bitrate()) * 125.0f;
 
-		return float(byteRate > 0 ? streamLength / byteRate : 0);
+		return byteRate > 0.0f ? float(streamLength) / byteRate : 0.0f;
 	}
 };
 
@@ -103,7 +103,27 @@ public:
 		return false;
 	}
 
-	float getSoundDuration() {
+	size_t getSoundDuration() {
+
+		TagLib::AudioProperties *properties = file->audioProperties();
+
+		if (!properties) {
+			return -1;
+		}
+
+		if (type == SOUNDTYPE_WAVE) {
+			SoundLib_WavFile* f = (SoundLib_WavFile*)file;
+			return f->audioProperties()->length();
+		}
+		else {
+			TagLib::MPEG::File* f = (TagLib::MPEG::File*)file;
+			return f->audioProperties()->length();
+		}
+
+		return 0;
+	}
+
+	float getSoundDurationFloat() {
 		
 		TagLib::AudioProperties *properties = file->audioProperties();
 		
@@ -119,7 +139,6 @@ public:
 			TagLib::MPEG::File* f = (TagLib::MPEG::File*)file;
 
 			long first = f->firstFrameOffset();
-			long last = f->lastFrameOffset();
 
 			f->seek(first);
 			TagLib::MPEG::Header firstHeader(f->readBlock(4));
@@ -136,7 +155,10 @@ public:
 				return float(timePerFrame * xingHeader.totalFrames());
 			}
 			else {
-				return float(((float)f->length() / ((float)f->audioProperties()->bitrate() * 1000.0)) * (float)8);
+				float byteRate = (float)f->audioProperties()->bitrate() * 125.0f; // 1000 / 8 = 125 (optimization)
+				float length = (float)(f->length() - f->firstFrameOffset()) / byteRate;
+
+				return length;
 			}
 		}
 

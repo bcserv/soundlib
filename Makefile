@@ -136,6 +136,7 @@ all: check
 		ln -sf $(SRCDS)/bin/tier0_i486.so tier0_i486.so; \
 	fi
 	$(MAKE) -f Makefile extension
+	cp /home/berni/developing/soundlib_extension/Release/soundlib.ext.so /server/game/cstrike/test/css/cstrike/addons/sourcemod/extensions
 
 check:
 	if [ "$(USEMETA)" = "true" ] && [ "$(ENGSET)" = "false" ]; then \

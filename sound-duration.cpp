@@ -73,7 +73,27 @@ static cell_t GetSoundLength(IPluginContext *pContext, const cell_t *params)
 		return pContext->ThrowNativeError("Invalid sound-file handle %x (error %d)", hndl, err);
 	}
  
-	return sp_ftoc(soundfile->getSoundDuration());
+	return soundfile->getSoundDuration();
+}
+
+static cell_t GetSoundLengthFloat(IPluginContext *pContext, const cell_t *params)
+{
+	Handle_t hndl = static_cast<Handle_t>(params[1]);
+	HandleError err;
+	HandleSecurity sec;
+ 
+	/* Build our security descriptor */
+	sec.pOwner = NULL;	/* Not needed, owner access is not checked */
+	sec.pIdentity = myself->GetIdentity();	/* But only this extension can read */
+ 
+	SoundFile *soundfile;
+	if ((err = g_pHandleSys->ReadHandle(hndl, g_SoundFileType, &sec, (void **)&soundfile))
+	     != HandleError_None)
+	{
+		return pContext->ThrowNativeError("Invalid sound-file handle %x (error %d)", hndl, err);
+	}
+ 
+	return sp_ftoc(soundfile->getSoundDurationFloat());
 }
 
 static cell_t GetSoundBitRate(IPluginContext *pContext, const cell_t *params) {
@@ -303,6 +323,7 @@ sp_nativeinfo_t g_SoundLibraryNatives[] =
 {
 	{"OpenSoundFile",			OpenSoundFile},
 	{"GetSoundLength",			GetSoundLength},
+	{"GetSoundLengthFloat",		GetSoundLengthFloat},
 	{"GetSoundBitRate",			GetSoundBitRate},
 	{"GetSoundSamplingRate",	GetSoundSamplingRate},
 	{"GetSoundArtist",			GetSoundArtist},

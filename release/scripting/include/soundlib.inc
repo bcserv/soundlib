@@ -33,17 +33,22 @@ public Extension:__ext_geoip =
  */
 native Handle:OpenSoundFile(const String:file[], bool:relativeToSound=true);
 
-
-
 /**
  * Gets the length of the sound file in seconds
  *
  * @param hndl			Handle to the sound file.
  * @return				The song length in seconds
  */
-native Float:GetSoundLength(Handle:hndl);
+native GetSoundLength(Handle:hndl);
 
-
+/**
+ * Gets the length of the sound file in seconds as float.
+ * Note: this probably won't work with some VBR encoded mp3's
+ *
+ * @param hndl			Handle to the sound file.
+ * @return				The song length in seconds as float
+ */
+native Float:GetSoundLengthFloat(Handle:hndl);
 
 /**
  * Get the Bit rate of sound (kbps)
@@ -55,8 +60,6 @@ native Float:GetSoundLength(Handle:hndl);
  */
 native GetSoundBitRate(Handle:hndl);
 
-
-
 /**
  * Get the Sampling rate of sound (hz)
  *
@@ -66,8 +69,6 @@ native GetSoundBitRate(Handle:hndl);
  * @return				Length of string written to buffer.
  */
 native GetSoundSamplingRate(Handle:hndl);
-
-
 
 /**
  * Get the Artist of the sound
@@ -79,8 +80,6 @@ native GetSoundSamplingRate(Handle:hndl);
  */
 native GetSoundArtist(Handle:hndl, String:buffer[], maxlength);
 
-
-
 /**
  * Get the Track title of  sound
  *
@@ -90,8 +89,6 @@ native GetSoundArtist(Handle:hndl, String:buffer[], maxlength);
  * @return				Length of string written to buffer.
  */
 native GetSoundTitle(Handle:hndl, String:buffer[], maxlength);
-
-
 
 /**
  * Get the Track number of the sound
@@ -103,8 +100,6 @@ native GetSoundTitle(Handle:hndl, String:buffer[], maxlength);
  */
 native GetSoundNum(Handle:hndl);
 
-
-
 /**
  * Get the Album of the sound
  *
@@ -114,8 +109,6 @@ native GetSoundNum(Handle:hndl);
  * @return				Length of string written to buffer.
  */
 native GetSoundAlbum(Handle:hndl, String:buffer[], maxlength);
-
-
 
 /**
  * Get the Year of  sound
@@ -127,8 +120,6 @@ native GetSoundAlbum(Handle:hndl, String:buffer[], maxlength);
  */
 native GetSoundYear(Handle:hndl);
 
-
-
 /**
  * Get the Comment of the sound
  *
@@ -138,8 +129,6 @@ native GetSoundYear(Handle:hndl);
  * @return				Length of string written to buffer.
  */
 native GetSoundComment(Handle:hndl, String:buffer[], maxlength);
-
-
 
 /**
  * Get the Genre of the sound

@@ -88,7 +88,8 @@ public Action:Command_SoundInfo(client, args) {
 	GetSoundGenre(soundfile, genre, sizeof(genre));
 	
 	ReplyToCommand(client, "Song Info %s", path);
-	ReplyToCommand(client, "Sound Length: %f", GetSoundLength(soundfile));
+	ReplyToCommand(client, "Sound Length: %d", GetSoundLength(soundfile));
+	ReplyToCommand(client, "Sound Length (float): %f", GetSoundLengthFloat(soundfile));
 	ReplyToCommand(client, "Birate: %d", GetSoundBitRate(soundfile));
 	ReplyToCommand(client, "Sampling Rate: %d", GetSoundSamplingRate(soundfile));
 	ReplyToCommand(client, "Artist: %s", artist);
