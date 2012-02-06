@@ -40,11 +40,11 @@
 /* Basic information exposed publicly */
 #define SMEXT_CONF_NAME			"Sound Info Library"
 #define SMEXT_CONF_DESCRIPTION	"Access information of sound files"
-#define SMEXT_CONF_VERSION		"0.9"
+#define SMEXT_CONF_VERSION		"1.0"
 #define SMEXT_CONF_AUTHOR		"Berni"
 #define SMEXT_CONF_URL			"http://forums.alliedmods.net/showthread.php?p=956090"
 #define SMEXT_CONF_LOGTAG		"SoundLib"
-#define SMEXT_CONF_LICENSE		"GPL"
+#define SMEXT_CONF_LICENSE		"GPL/LGPL/MPL"
 #define SMEXT_CONF_DATESTRING	__DATE__
 
 /** 
