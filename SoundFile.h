@@ -136,16 +136,7 @@ public:
 				return float(timePerFrame * xingHeader.totalFrames());
 			}
 			else {
-				// Since there was no valid Xing header found, we hope that we're in a constant
-				// bitrate file.
-
-				// TODO: Make this more robust with audio property detection for VBR without a
-				// Xing header.
-				if (firstHeader.frameLength() > 0 && firstHeader.bitrate() > 0) {
-					int frames = (last - first) / firstHeader.frameLength() + 1;
-
-					return float(float(firstHeader.frameLength() * frames) / float(firstHeader.bitrate() * 125) + 0.5);
-				}
+				return float(((float)f->length() / ((float)f->audioProperties()->bitrate() * 1000.0)) * (float)8);
 			}
 		}
 

@@ -41,7 +41,7 @@ native Handle:OpenSoundFile(const String:file[], bool:relativeToSound=true);
  * @param hndl			Handle to the sound file.
  * @return				The song length in seconds
  */
-native GetSoundLength(Handle:hndl);
+native Float:GetSoundLength(Handle:hndl);
 
 
 
