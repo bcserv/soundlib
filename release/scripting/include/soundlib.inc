@@ -1,3 +1,8 @@
+#if defined _soundlib_included
+	#endinput
+#endif
+#define _soundlib_included
+
 /**
  * Do not edit below this line!
  */
